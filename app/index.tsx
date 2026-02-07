@@ -15,12 +15,15 @@ import {
   Linking,
   ActivityIndicator,
   Modal,
-  TouchableOpacity
+  TouchableOpacity,
+  Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Contacts from 'expo-contacts';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // <--- IMPORT THIS
+import * as SMS from 'expo-sms'; // <--- IMPORT SMS
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Settings, X } from 'lucide-react-native';
+import { generateMessage } from '@/services/ai'; // <--- IMPORT YOUR BACKEND
 
 const SCREEN_OPTIONS = {
   title: 'Rephrase',
@@ -31,6 +34,7 @@ const DEMOGRAPHIC_OPTIONS = [
   { label: 'Gen-Z (15-20)', color: 'bg-blue-100 text-blue-800' },
   { label: 'Millenial (30-40)', color: 'bg-green-100 text-green-800' },
   { label: 'Polite (60+)', color: 'bg-pink-100 text-pink-800' },
+  { label: 'Professional', color: 'bg-gray-100 text-gray-800' }, // Added for default
 ];
 
 const STORAGE_KEY = 'contact_demographics_v1';
@@ -40,7 +44,8 @@ type ContactItem = {
   name: string;
   avatar?: string;
   demographic: string; 
-  role?: string;       
+  role?: string; 
+  phoneNumbers?: Contacts.PhoneNumber[]; // <--- Need phone numbers
 };
 
 const DemographicBadge = ({ type }: { type: string }) => {
@@ -61,6 +66,8 @@ export default function Screen() {
   const [permissionStatus, setPermissionStatus] = React.useState<string | null>(null);
   const [contacts, setContacts] = React.useState<ContactItem[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [isGenerating, setIsGenerating] = React.useState(false); // New loading state for AI
+  
   const [message, setMessage] = React.useState('');
   const [search, setSearch] = React.useState('');
   const [selectedContactIds, setSelectedContactIds] = React.useState<Set<string>>(new Set());
@@ -83,10 +90,10 @@ export default function Screen() {
 
   const loadContacts = async () => {
     setIsLoading(true);
-    
     try {
+      // Requested PhoneNumbers field as well
       const { data } = await Contacts.getContactsAsync({
-        fields: [Contacts.Fields.Emails, Contacts.Fields.Image],
+        fields: [Contacts.Fields.PhoneNumbers, Contacts.Fields.Image],
         sort: Contacts.SortTypes.FirstName
       });
 
@@ -98,16 +105,16 @@ export default function Screen() {
           id: c.id ?? Math.random().toString(),
           name: c.name || 'Unknown Contact',
           avatar: c.image?.uri,
-          demographic: savedDemographics[c.id] || 'Unknown', 
-          role: 'Phone Contact'
-        })).filter(c => c.name !== 'Unknown Contact');
+          demographic: savedDemographics[c.id] || 'Professional', // Default to Professional
+          role: 'Phone Contact',
+          phoneNumbers: c.phoneNumbers
+        })).filter(c => c.name !== 'Unknown Contact' && c.phoneNumbers && c.phoneNumbers.length > 0);
         
         setContacts(formattedContacts);
       }
     } catch (e) {
       console.error("Failed to load contacts", e);
     }
-    
     setIsLoading(false);
   };
 
@@ -146,9 +153,58 @@ export default function Screen() {
     setSelectedContactIds(next);
   };
 
-  const handleSend = () => {
+  // --- CORE LOGIC: SENDING ---
+
+  const handleSend = async () => {
+    const isAvailable = await SMS.isAvailableAsync();
+    if (!isAvailable) {
+      Alert.alert("Error", "SMS is not available on this device");
+      return;
+    }
+
+    setIsGenerating(true);
+
+    // 1. Filter selected contacts
     const targets = contacts.filter(c => selectedContactIds.has(c.id));
-    console.log("Sending to:", targets.map(t => `${t.name} (${t.demographic})`));
+
+    // 2. Group by Demographic
+    // Structure: { 'Gen-Z': [Contact1, Contact2], 'Polite': [Contact3] }
+    const groups: Record<string, ContactItem[]> = {};
+    targets.forEach(t => {
+      if (!groups[t.demographic]) groups[t.demographic] = [];
+      groups[t.demographic].push(t);
+    });
+
+    try {
+      // 3. Generate messages for each group via Backend
+      // We map the groups to promises to fetch them in parallel
+      const groupKeys = Object.keys(groups);
+      
+      for (const demographic of groupKeys) {
+        const recipients = groups[demographic];
+        
+        // Call our "Backend"
+        const aiMessage = await generateMessage(message, demographic);
+
+        // Get phone numbers
+        const phoneNumbers = recipients
+            .map(c => c.phoneNumbers?.[0]?.number)
+            .filter(Boolean) as string[];
+
+        if (phoneNumbers.length === 0) continue;
+
+        // 4. Send SMS
+        // Note: We await the result. The user has to return to the app 
+        // to trigger the next loop if there are multiple demographics.
+        await SMS.sendSMSAsync(phoneNumbers, aiMessage);
+      }
+
+    } catch (error) {
+      Alert.alert("Error", "Failed to generate or send messages.");
+      console.error(error);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -166,7 +222,8 @@ export default function Screen() {
               value={message}
               onChangeText={setMessage}
               className="min-h-[100px]"
-              >Type your message...</Textarea>
+              placeholder="Type your message..."
+             />
           </View>
 
           <View className="flex-1 gap-3">
@@ -234,10 +291,21 @@ export default function Screen() {
           </View>
 
           <View className="pt-2">
-             <Button size="lg" onPress={handleSend} disabled={selectedContactIds.size === 0 || message.length === 0}>
-                <Text>
-                  {selectedContactIds.size > 0 ? `Rephrase for ${selectedContactIds.size} Recipients` : 'Select a Contact'}
-                </Text>
+             <Button 
+                size="lg" 
+                onPress={handleSend} 
+                disabled={selectedContactIds.size === 0 || message.length === 0 || isGenerating}
+             >
+                {isGenerating ? (
+                   <View className="flex-row items-center justify-center gap-2">
+                      <ActivityIndicator color="white" />
+                      <Text className="text-white">Rephrasing...</Text>
+                   </View>
+                ) : (
+                   <Text>
+                     {selectedContactIds.size > 0 ? `Generate & Send (${selectedContactIds.size})` : 'Select a Contact'}
+                   </Text>
+                )}
              </Button>
           </View>
 
