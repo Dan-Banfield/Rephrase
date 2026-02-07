@@ -2,9 +2,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { Textarea } from '@/components/ui/textarea';
-import { Stack } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
+import { ScrollView } from 'react-native';
+import { useNavigation } from 'expo-router';
 
 import {
   FlatList,
@@ -19,14 +20,9 @@ import {
   TouchableOpacity
 } from 'react-native';
 
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 import * as Contacts from 'expo-contacts';
 import { Settings, X } from 'lucide-react-native';
-
-const SCREEN_OPTIONS = {
-  title: 'Rephrase',
-  headerTransparent: false,
-};
 
 const DEMOGRAPHIC_OPTIONS = [
   { label: 'Professional', color: 'bg-blue-100 text-blue-800' },
@@ -59,6 +55,15 @@ const DemographicBadge = ({ type }: { type: string }) => {
 };
 
 export default function Screen() {
+  const navigation = useNavigation();
+  
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      title: 'Rephrase',
+      headerTransparent: false,
+    });
+  }, [navigation]);
+
   const { colorScheme } = useColorScheme();
   
   const [permissionStatus, setPermissionStatus] = React.useState<string | null>(null);
@@ -71,11 +76,13 @@ export default function Screen() {
   const [editingContactId, setEditingContactId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    let isMounted = true;
     (async () => {
       const { status } = await Contacts.getPermissionsAsync();
       setPermissionStatus(status);
-      if (status === 'granted') loadContacts();
+      if (status === 'granted' && isMounted) loadContacts();
     })();
+    return () => { isMounted = false; };
   }, []);
 
   const requestPermission = async () => {
@@ -134,14 +141,14 @@ export default function Screen() {
 
   return (
     <>
-      <Stack.Screen options={SCREEN_OPTIONS} />
+      
 
       <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
         className="flex-1"
-        keyboardVerticalOffset={100} 
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0} 
       >
-        <SafeAreaView className="flex-1 bg-background p-4 gap-6">
+        <View className="flex-1 bg-background p-4 gap-6">
           <View className="gap-2">
             <Text variant="h3" className="font-semibold">Original Message</Text>
             <Textarea 
@@ -225,7 +232,7 @@ export default function Screen() {
                                     className="p-2 ml-2 bg-secondary/20 rounded-full"
                                     hitSlop={10}
                                 >
-                                    <Settings size={20} className="text-muted-foreground" color="gray" />
+                                    <Settings size={20} color={colorScheme === 'dark' ? '#ccc' : '#666'}/>
                                 </TouchableOpacity>
                             </View>
                             );
@@ -240,7 +247,7 @@ export default function Screen() {
              <Button 
                 size="lg" 
                 onPress={handleSend}
-                disabled={selectedContactIds.size === 0 || message.length === 0}
+                disabled={selectedContactIds.size === 0 || message.trim().length === 0}
              >
                 <Text>
                   {selectedContactIds.size > 0 
@@ -287,9 +294,9 @@ export default function Screen() {
                 </View>
             </View>
           </Modal>
-
-        </SafeAreaView>
+        </View>
       </KeyboardAvoidingView>
     </>
   );
 }
+
