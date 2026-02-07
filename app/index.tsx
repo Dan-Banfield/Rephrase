@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Stack } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
+import { Tabs } from 'expo-router';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -209,21 +210,20 @@ export default function Screen() {
 
   return (
     <>
-      <Stack.Screen options={SCREEN_OPTIONS} />
       <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
         className="flex-1"
-        keyboardVerticalOffset={100} 
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0} 
       >
-        <SafeAreaView className="flex-1 bg-background p-4 gap-6">
+        <View className="flex-1 bg-background p-4 gap-6">
           <View className="gap-2">
             <Text variant="h3" className="font-semibold">Original Message</Text>
             <Textarea 
+              placeholder="Type your draft..."
               value={message}
               onChangeText={setMessage}
               className="min-h-[100px]"
-              placeholder="Type your message..."
-             />
+            />
           </View>
 
           <View className="flex-1 gap-3">
@@ -294,7 +294,7 @@ export default function Screen() {
              <Button 
                 size="lg" 
                 onPress={handleSend} 
-                disabled={selectedContactIds.size === 0 || message.length === 0 || isGenerating}
+                disabled={selectedContactIds.size === 0 || message.trim().length === 0 || isGenerating}
              >
                 {isGenerating ? (
                    <View className="flex-row items-center justify-center gap-2">
@@ -336,7 +336,7 @@ export default function Screen() {
             </View>
           </Modal>
 
-        </SafeAreaView>
+        </View>
       </KeyboardAvoidingView>
     </>
   );
