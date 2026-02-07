@@ -6,6 +6,7 @@ import { useColorScheme } from 'nativewind';
 import * as React from 'react';
 import { ScrollView } from 'react-native';
 import { useNavigation } from 'expo-router';
+import { Repeat } from 'lucide-react-native';
 
 import {
   FlatList,

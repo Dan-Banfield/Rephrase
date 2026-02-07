@@ -31,6 +31,10 @@ export default function TabsLayout() {
            }}
         />
         <Tabs.Screen
+          name="social"
+          options={{title: 'Socials'}}
+          />
+        <Tabs.Screen
           name="+not-found"
           options={{ href: null, headerShown: false }}
         />
