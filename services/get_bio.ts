@@ -1,4 +1,4 @@
-const APIFY_TOKEN = "apify_api_McfASi0PCoaKe9eLvuPPfehH6aNTu31YGKWm"; // 🔴 Replace with your key
+const APIFY_TOKEN = process.env.EXPO_PUBLIC_APIFY_API_KEY || "";
 const ACTOR_ID = "dSCLg0C3YEZ83HzYX";
 
 export const getBio = async () => {
