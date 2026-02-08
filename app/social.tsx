@@ -14,11 +14,13 @@ import {
   Image,
   FlatList,
   TouchableOpacity,
-  Alert
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 
 import { MessageSquare, Users, ThumbsUp, Share2, Plus } from 'lucide-react-native';
 import { Textarea } from '@/components/ui/textarea';
+import { generateMessage, generateStarter } from '@/services/ai';
 
 type SocialPost = {
   id: string;
@@ -34,6 +36,10 @@ type SocialPost = {
 export default function SocialScreen() {
   const navigation = useNavigation();
   const { colorScheme } = useColorScheme();
+
+  const [handle, setHandle] = React.useState('');
+  const [isGenerating, setIsGenerating] = React.useState(false);
+  const [starter, setStarter] = React.useState(''); 
   
 
   React.useLayoutEffect(() => {
@@ -43,24 +49,38 @@ export default function SocialScreen() {
   }, [navigation]);
 
   const handlePress = async () => {
+    setIsGenerating(true);
     try {
-      console.log("Starting scrape...");
-      const results = await getBio();
-      console.log("Final Data:", results);
+      const bio = await getBio(handle);
+      const starter = await generateStarter(bio);
+      setStarter(starter);
+      console.log(starter);
     } catch (error) {
       console.error("Error:", error);
+    }
+    finally{
+      setIsGenerating(false);
     }
   };
 
   return (
     <SafeAreaView className='flex-1 justify-start p-4 gap-4'>
-      <Textarea value='@instagram_handle'/>
+      <Textarea value={handle} onChangeText={setHandle}/>
 
-      <Button onPress={handlePress}>
-        <Text>
-          Suggest conversation starter!
-        </Text>
+      <Button onPress={handlePress} disabled={isGenerating}>
+        {isGenerating ? (
+                           <View className="flex-row items-center justify-center gap-2">
+                              <ActivityIndicator color="white" />
+                              <Text className="text-white">Generating...</Text>
+                           </View>
+                        ) : (
+                           <Text>
+                             Suggest a conversation starter!
+                           </Text>
+                        )}
       </Button>
+
+      <Textarea value={starter} editable={false}></Textarea>
     </SafeAreaView>
   );
 }

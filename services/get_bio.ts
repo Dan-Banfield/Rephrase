@@ -1,10 +1,10 @@
 const APIFY_TOKEN = process.env.EXPO_PUBLIC_APIFY_API_KEY || "";
 const ACTOR_ID = "dSCLg0C3YEZ83HzYX";
 
-export const getBio = async () => {
+export const getBio = async (username: string) => {
     try {
         const input = {
-            "usernames": ["wormald03"],
+            "usernames": [username],
             "includeAboutSection": false
         };
 

@@ -27,3 +27,27 @@ export const generateMessage = async (originalMessage: string, demographic: stri
     return originalMessage;
   }
 };
+
+export const generateStarter = async (instagramBio: string): Promise<string> => {
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+
+    const prompt = `
+      System: You are a conversation starting suggestion engine. Your ONLY purpose is to suggest conversation starters based on the input Instagram bio to strictly match the target demographic tone. 
+      - Do NOT output quotes.
+      - Do NOT output introductory text like "Here is the message".
+      - Output ONLY the rewritten text.
+
+      Input Message: "${instagramBio}"
+      Target Demographic: "Instagram Message"
+    `;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text().trim();
+    
+  } catch (error) {
+    console.error("Gemini API Error:", error);
+    return instagramBio;
+  }
+};
