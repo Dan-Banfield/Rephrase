@@ -205,7 +205,7 @@ export default function Screen() {
       >
         <SafeAreaView className="flex-1 bg-background p-4 gap-6">
           <View className="gap-2">
-            <Text variant="h3" className="font-semibold">Original Message</Text>
+            <Text className="text-xs font-bold uppercase tracking-widest ml-1">Your Message</Text>
             <Textarea 
               value={message}
               onChangeText={setMessage}
@@ -215,7 +215,7 @@ export default function Screen() {
 
           <View className="flex-1 gap-3">
             <View className="flex-row justify-between items-end">
-              <Text variant="h3" className="font-semibold">Select Recipients</Text>
+              <Text className="text-xs font-bold uppercase tracking-widest ml-1">Select Recipients</Text>
               {permissionStatus === 'granted' && (
                 <Text className="text-muted-foreground text-xs">
                     {selectedContactIds.size} selected

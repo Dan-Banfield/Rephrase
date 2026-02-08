@@ -63,24 +63,30 @@ export default function SocialScreen() {
     }
   };
 
-  return (
-    <SafeAreaView className='flex-1 justify-start p-4 gap-4'>
-      <Textarea value={handle} onChangeText={setHandle}/>
+    return (
+ 
+    <SafeAreaView className='flex-1 justify-start p-6 gap-6 bg-transparent'>
 
-      <Button onPress={handlePress} disabled={isGenerating} className='h-14 rounded-2xl shadow-lg'>
-        {isGenerating ? (
-                           <View className="flex-row items-center justify-center gap-2">
-                              <ActivityIndicator color="white" />
-                              <Text className="text-white">Generating...</Text>
-                           </View>
-                        ) : (
-                           <Text>
-                             Suggest a conversation starter!
-                           </Text>
-                        )}
+
+      <View className="gap-2">
+        <Text className="text-xs font-bold uppercase tracking-widest ml-1">Profile Handle</Text>
+        <Input 
+          value={handle} 
+          onChangeText={setHandle} 
+          placeholder="@username"
+          className="bg-white/10 border-white/20 text-white h-14 rounded-xl px-4"
+        />
+      </View>
+
+
+      <Button onPress={handlePress} disabled={isGenerating}>
+        <Text>Import Profile</Text>
+  
       </Button>
-
-      <Textarea value={starter} editable={false}></Textarea>
+      
+      <View className="flex-1 bg-white/5 border border-white/10 rounded-3xl p-4">
+        <Textarea value={starter} className="text-white text-lg" />
+      </View>
     </SafeAreaView>
   );
 }

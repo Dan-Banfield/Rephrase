@@ -28,7 +28,7 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="index"
           options={{ title: 'Rephrase',
-            headerTransparent: false,
+            headerTransparent: true,
             tabBarIcon: ({color, size}) => 
             (
               <Speech size={20} color={color}/>
