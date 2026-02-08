@@ -67,7 +67,7 @@ export default function SocialScreen() {
     <SafeAreaView className='flex-1 justify-start p-4 gap-4'>
       <Textarea value={handle} onChangeText={setHandle}/>
 
-      <Button onPress={handlePress} disabled={isGenerating}>
+      <Button onPress={handlePress} disabled={isGenerating} className='h-14 rounded-2xl shadow-lg'>
         {isGenerating ? (
                            <View className="flex-row items-center justify-center gap-2">
                               <ActivityIndicator color="white" />

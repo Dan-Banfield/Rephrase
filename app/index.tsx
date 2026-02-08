@@ -291,7 +291,8 @@ export default function Screen() {
           </View>
 
           <View className="pt-2">
-             <Button 
+             <Button
+                className='h-14 rounded-2xl shadow-lg'
                 size="lg" 
                 onPress={handleSend} 
                 disabled={selectedContactIds.size === 0 || message.length === 0 || isGenerating}
