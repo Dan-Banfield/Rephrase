@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Stack } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
+import { Tabs } from 'expo-router';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -222,7 +223,6 @@ export default function Screen() {
               value={message}
               onChangeText={setMessage}
               className="min-h-[100px]"
-              placeholder="Type your message..."
              />
           </View>
 
