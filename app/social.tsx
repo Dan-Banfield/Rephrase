@@ -6,6 +6,7 @@ import * as React from 'react';
 import { useNavigation } from 'expo-router';
 import { Settings, X, Repeat } from 'lucide-react-native';
 import { getBio } from '@/services/get_bio';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
   ScrollView,
@@ -17,6 +18,7 @@ import {
 } from 'react-native';
 
 import { MessageSquare, Users, ThumbsUp, Share2, Plus } from 'lucide-react-native';
+import { Textarea } from '@/components/ui/textarea';
 
 type SocialPost = {
   id: string;
@@ -51,8 +53,14 @@ export default function SocialScreen() {
   };
 
   return (
-    <Button onPress={handlePress}>
-      <Text>Click me</Text>
-    </Button>
+    <SafeAreaView className='flex-1 justify-start p-4 gap-4'>
+      <Textarea value='@instagram_handle'/>
+
+      <Button onPress={handlePress}>
+        <Text>
+          Suggest conversation starter!
+        </Text>
+      </Button>
+    </SafeAreaView>
   );
 }

@@ -8,7 +8,6 @@ export const getBio = async () => {
             "includeAboutSection": false
         };
 
-        // 1. Start the Actor run
         const runUrl = `https://api.apify.com/v2/acts/${ACTOR_ID}/runs?token=${APIFY_TOKEN}&waitForFinish=120`;
         const runResponse = await fetch(runUrl, {
             method: 'POST',
@@ -21,7 +20,6 @@ export const getBio = async () => {
         const runData = await runResponse.json();
         const datasetId = runData.data.defaultDatasetId;
 
-        // 2. Fetch the dataset items
         const datasetUrl = `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_TOKEN}`;
         const datasetResponse = await fetch(datasetUrl);
         
@@ -29,12 +27,10 @@ export const getBio = async () => {
 
         const items = await datasetResponse.json();
         
-        // 3. Extract ONLY the biography from the first result
         if (items.length > 0 && items[0].biography) {
-            console.log("✅ Bio found:", items[0].biography);
-            return items[0].biography; // Returns just the string
+            return items[0].biography;
         } else {
-            console.log("⚠️ No bio found");
+            console.log("No bio found");
             return ""; 
         }
 
