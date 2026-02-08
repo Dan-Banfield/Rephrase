@@ -5,7 +5,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Stack } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
-import { Tabs } from 'expo-router';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -21,10 +20,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Contacts from 'expo-contacts';
-import * as SMS from 'expo-sms'; // <--- IMPORT SMS
+import * as SMS from 'expo-sms';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Settings, X } from 'lucide-react-native';
-import { generateMessage } from '@/services/ai'; // <--- IMPORT YOUR BACKEND
+import { generateMessage } from '@/services/ai';
 
 const SCREEN_OPTIONS = {
   title: 'Rephrase',
@@ -35,7 +34,7 @@ const DEMOGRAPHIC_OPTIONS = [
   { label: 'Gen-Z (15-20)', color: 'bg-blue-100 text-blue-800' },
   { label: 'Millenial (30-40)', color: 'bg-green-100 text-green-800' },
   { label: 'Polite (60+)', color: 'bg-pink-100 text-pink-800' },
-  { label: 'Professional', color: 'bg-gray-100 text-gray-800' }, // Added for default
+  { label: 'Professional', color: 'bg-gray-100 text-gray-800' },
 ];
 
 const STORAGE_KEY = 'contact_demographics_v1';
@@ -46,7 +45,7 @@ type ContactItem = {
   avatar?: string;
   demographic: string; 
   role?: string; 
-  phoneNumbers?: Contacts.PhoneNumber[]; // <--- Need phone numbers
+  phoneNumbers?: Contacts.PhoneNumber[];
 };
 
 const DemographicBadge = ({ type }: { type: string }) => {
@@ -67,7 +66,7 @@ export default function Screen() {
   const [permissionStatus, setPermissionStatus] = React.useState<string | null>(null);
   const [contacts, setContacts] = React.useState<ContactItem[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
-  const [isGenerating, setIsGenerating] = React.useState(false); // New loading state for AI
+  const [isGenerating, setIsGenerating] = React.useState(false);
   
   const [message, setMessage] = React.useState('');
   const [search, setSearch] = React.useState('');
@@ -92,7 +91,6 @@ export default function Screen() {
   const loadContacts = async () => {
     setIsLoading(true);
     try {
-      // Requested PhoneNumbers field as well
       const { data } = await Contacts.getContactsAsync({
         fields: [Contacts.Fields.PhoneNumbers, Contacts.Fields.Image],
         sort: Contacts.SortTypes.FirstName
@@ -154,7 +152,6 @@ export default function Screen() {
     setSelectedContactIds(next);
   };
 
-  // --- CORE LOGIC: SENDING ---
 
   const handleSend = async () => {
     const isAvailable = await SMS.isAvailableAsync();
@@ -165,11 +162,8 @@ export default function Screen() {
 
     setIsGenerating(true);
 
-    // 1. Filter selected contacts
     const targets = contacts.filter(c => selectedContactIds.has(c.id));
 
-    // 2. Group by Demographic
-    // Structure: { 'Gen-Z': [Contact1, Contact2], 'Polite': [Contact3] }
     const groups: Record<string, ContactItem[]> = {};
     targets.forEach(t => {
       if (!groups[t.demographic]) groups[t.demographic] = [];
@@ -177,26 +171,19 @@ export default function Screen() {
     });
 
     try {
-      // 3. Generate messages for each group via Backend
-      // We map the groups to promises to fetch them in parallel
       const groupKeys = Object.keys(groups);
       
       for (const demographic of groupKeys) {
         const recipients = groups[demographic];
         
-        // Call our "Backend"
         const aiMessage = await generateMessage(message, demographic);
 
-        // Get phone numbers
         const phoneNumbers = recipients
             .map(c => c.phoneNumbers?.[0]?.number)
             .filter(Boolean) as string[];
 
         if (phoneNumbers.length === 0) continue;
 
-        // 4. Send SMS
-        // Note: We await the result. The user has to return to the app 
-        // to trigger the next loop if there are multiple demographics.
         await SMS.sendSMSAsync(phoneNumbers, aiMessage);
       }
 
